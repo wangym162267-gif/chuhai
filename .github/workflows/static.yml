@@ -26,11 +26,23 @@ jobs:
         with:
           node-version: 20
 
-      - name: Build
+      - name: Unzip and Build
         run: |
-          cd "中东出海智能体网页_GitHub上传"*
+          # 1. 解压 zip 压缩包到当前目录
+          unzip -o *.zip
+          
+          # 2. 找到解压出来的项目目录（包含 package.json 的目录）
+          TARGET_DIR=$(find . -maxdepth 2 -name "package.json" -exec dirname {} \; | head -n 1)
+          echo "Target project directory: $TARGET_DIR"
+          
+          # 3. 安装依赖并打包
+          cd "$TARGET_DIR"
           npm install
           npm run build
+          
+          # 4. 把打包后的 dist 放到根目录供部署
+          mkdir -p $GITHUB_WORKSPACE/output_dist
+          cp -r dist/* $GITHUB_WORKSPACE/output_dist/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -38,7 +50,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "./中东出海智能体网页_GitHub上传*/dist"
+          path: "./output_dist"
 
   deploy:
     environment:

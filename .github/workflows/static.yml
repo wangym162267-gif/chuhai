@@ -26,30 +26,16 @@ jobs:
         with:
           node-version: 22
 
-      - name: Extract and Build
+      - name: Install and Build
         run: |
-          # 1. 使用 Python 稳妥解压当前目录下的 zip 包（完美支持中文字符）
-          python3 -c "
-          import zipfile, glob, os
-          zips = glob.glob('*.zip')
-          if zips:
-              with zipfile.ZipFile(zips[0], 'r') as zip_ref:
-                  zip_ref.extractall('extracted_project')
-          "
-          
-          # 2. 定位到包含 package.json 的目录
-          TARGET_DIR=$(find extracted_project -name "package.json" -exec dirname {} \; | head -n 1)
-          if [ -z "$TARGET_DIR" ]; then TARGET_DIR="."; fi
-          echo "Found project at: $TARGET_DIR"
-          
-          # 3. 安装依赖并构建
+          # 找到包含 package.json 的项目根目录
+          TARGET_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" -exec dirname {} \; | head -n 1)
+          echo "Target dir: $TARGET_DIR"
           cd "$TARGET_DIR"
           npm install
           npm run build
-          
-          # 4. 将打包生成物复制到部署根目录
-          mkdir -p "$GITHUB_WORKSPACE/output_dist"
-          cp -r dist/* "$GITHUB_WORKSPACE/output_dist/"
+          mkdir -p $GITHUB_WORKSPACE/output_dist
+          cp -r dist/* $GITHUB_WORKSPACE/output_dist/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
